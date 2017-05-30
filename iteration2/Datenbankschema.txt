@@ -1,0 +1,15 @@
+CREATE TABLE Tweets 
+(   Handle           Varchar(15) NOT NULL,
+    Text             Long (140)  NOT NULL,
+    truncated        Boolean,
+    time             Date        NOT NULL,
+    retweet_count    Number
+    favourite_count  Number
+    id               Number      PRIMARY KEY);
+
+CREATE TABLE contains 
+(   HName     Varchar(140) NOT NULL,
+    id        Number       NOT NULL);
+
+CREATE TABLE Hashtag 
+(   HName     Varchar(140) PRIMARY KEY);
