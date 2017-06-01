@@ -1,0 +1,58 @@
+dbs@dbs:~$ sudo su
+[sudo] Passwort für dbs: 
+root@dbs:/home/dbs# apt-get install nginx-full
+Paketlisten werden gelesen... Fertig
+Abhängigkeitsbaum wird aufgebaut.       
+Statusinformationen werden eingelesen.... Fertig
+nginx-full ist schon die neueste Version (1.10.3-1ubuntu3).
+Die folgenden Pakete wurden automatisch installiert und werden nicht mehr benötigt:
+  linux-headers-4.10.0-19 linux-headers-4.10.0-19-generic linux-image-4.10.0-19-generic
+  linux-image-extra-4.10.0-19-generic
+Verwenden Sie »sudo apt autoremove«, um sie zu entfernen.
+0 aktualisiert, 0 neu installiert, 0 zu entfernen und 21 nicht aktualisiert.
+root@dbs:/home/dbs# cd /etc/nginx/sites-available/
+root@dbs:/etc/nginx/sites-available# ls -la
+insgesamt 16
+drwxr-xr-x 2 root root 4096 Mai 17 20:39 .
+drwxr-xr-x 8 root root 4096 Mai  2 17:56 ..
+-rw-r--r-- 1 root root 2416 Feb 15 17:39 default
+-rw-r--r-- 1 root root  611 Mai  2 19:26 uebung2
+root@dbs:/etc/nginx/sites-available# cp default elections
+root@dbs:/etc/nginx/sites-available# nano elections 
+root@dbs:/etc/nginx/sites-available# cat elections 
+
+
+# DBS-Election server configuration
+#
+server {
+	listen 80;
+	listen [::]:80;
+
+	root /var/www/elections;
+
+	# Add index.php to the list if you are using PHP
+	index index.html index.htm index.nginx-debian.html;
+
+	server_name _;
+
+	location / {
+		# First attempt to serve request as file, then
+		# as directory, then fall back to displaying a 404.
+		try_files $uri $uri/ =404;
+	}
+}
+root@dbs:/etc/nginx/sites-available# rm ../sites-enabled/*
+root@dbs:/etc/nginx/sites-available# ln -s /etc/nginx/sites-available/elections /etc/nginx/sites-enabled/elections
+root@dbs:/etc/nginx/sites-available# mkdir /var/www/elections
+root@dbs:/etc/nginx/sites-available# nano /var/www/elections/index.html
+root@dbs:/etc/nginx/sites-available# service nginx reload
+root@dbs:/etc/nginx/sites-available# curl localhost
+<html>
+<head>
+<title>Elections</title>
+</head>
+<body>
+</body>
+</html>
+root@dbs:/etc/nginx/sites-available# 
+
