@@ -1,13 +1,45 @@
-#!/usr/bin/python
+\documentclass[a4paper]{article}
 
+%% Language and font encodings
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+
+%% Sets page size and margins
+\usepackage[a4paper,top=3cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+
+%% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\title{DBS - Projekt: 2. Iteration - Datenimport}
+\author{XXXXXXXXXXXXXXXXXXXXX}
+
+\begin{document}
+\maketitle
+
+Quellcode auf: \href{https://github.com/0rC0/DBS-election/tree/dev/iteration2}{https://github.com/0rC0/DBS-election/tree/dev/iteration2}
+\section{Aufgabe 1, 2 ,3}
+\subsection{Beschreibung}
+
+Alle aufgabe werden mit demselben Skript erledigt. Dies befindet sich auf GitHub auf am link \href{https://github.com/0rC0/DBS-election/blob/dev/iteration2/aufgabe_1_2_3.py}{https://github.com/0rC0/DBS-election/blob/dev/iteration2/aufgabe\_1\_2\_3.py }
+Es wurden die folgenden Modulen benutzt:
+\begin{verbatim}
 import psycopg2 as pg2
 import csv
 import re
 from datetime import datetime
-
-# Hilfsfunktionen
-# =========================
-
+\end{verbatim}
+und die folgenden Hilfsfunktionen entwickelt:
+\begin{verbatim}
 def extract_hashtags(s):
     # Extract Hashtags from a string with regular expression and
     # return a list of those
@@ -44,10 +76,23 @@ def rm_bad_formatted_chars(s):
 def mod_special_chars(s):
     # Characters like quote or semicolon can be annoing....
     return s.replace(';', ' ').replace("'", " ")
+\end{verbatim}
+Die Funktion main() führt die Aufgabe nacheinanders aus:
+\begin{verbatim}
+def main():
+    cfg = {'host': '192.168.178.60',
+           'user': 'elecuser',
+           'pw': 'elecpass',
+           'db': 'elections',
+           'port': '5432'}
+    aufgabe1(cfg)
+    tweets, hashtags = aufgabe2()
+    aufgabe3(cfg, tweets, hashtags)
+\end{verbatim}
 
-# Aufgabe 1
-# ===================================
-
+\subsection{Aufgabe 1}
+Die .sql Detei ist an der link \href{https://github.com/0rC0/DBS-election/blob/dev/iteration2/DBSchema.sql}{https://github.com/0rC0/DBS-election/blob/dev/iteration2/DBSchema.sql}
+\begin{verbatim}
 def aufgabe1(cfg):
     # 1. Erstellen Sie in Ihrer Datenbank "Election" ein zu Ihrem relationalen
     # Modell passendes Datenbankschema mit allen Constraints.
@@ -84,10 +129,13 @@ def aufgabe1(cfg):
             hname varchar(140) NOT NULL);
         ''')
     conn.commit()
+\end{verbatim}
+\subsection{Aufgabe 2: Datenbereinigung}
 
-# Aufgabe 2
-# =================================
-
+Die Rohdatendatei enthält diversen Zeichnen mit unbekannter Codierung. Dies werden versucht in utf zu encoden, ansonsten mit Leerzeichnen ausgetauscht.
+Die Daten werden auch angepasst, zum Beispiel, werden die boolesche werten ins Python boolsche Werte umgewandelt, sowie die Integers oder die Datetime, die als Strings importiert werden.
+Während der Anpassung der Daten werden auch die Hashtags mithilfe eine Regular Expression extraiert und in ein Set hinzugefügt.
+\begin{verbatim}
 def aufgabe2():
     # Stellen Sie sicher, dass alle Daten, die Sie spaeter importieren werden
     # fehlerfrei sind. Reparieren oder verwerfen Sie betreffende Datensaetze.
@@ -114,10 +162,9 @@ def aufgabe2():
             d['truncated'] = string_to_bool(row[10])
             tweets.append(d)
     return tweets, hashtags
-
-# Aufgabe 3
-# =============================
-
+\end{verbatim}
+\subsection{Aufgabe 3: Datenimport}
+\begin{verbatim}
 def aufgabe3(cfg, tweets, hashtags):
     # Importieren Sie die aufbereiteten Daten in Ihre Datenbank "Election".
     # Schreiben Sie hierzu ein Programm in einer Programmiersprache Ihrer
@@ -160,18 +207,67 @@ def aufgabe3(cfg, tweets, hashtags):
             INSERT INTO contains(hname, id) VALUES ('{0}', '{1}')
             '''.format(ht, i[0]))
     conn.commit()
+\end{verbatim}
+
+\section{4. Aufgabe: Webserver}
+\begin{verbatim}
+dbs@dbs:~$ sudo su
+[sudo] Passwort für dbs: 
+root@dbs:/home/dbs# apt-get install nginx-full
+Paketlisten werden gelesen... Fertig
+Abhängigkeitsbaum wird aufgebaut.       
+Statusinformationen werden eingelesen.... Fertig
+nginx-full ist schon die neueste Version (1.10.3-1ubuntu3).
+Die folgenden Pakete wurden automatisch installiert und werden nicht mehr benötigt:
+  linux-headers-4.10.0-19 linux-headers-4.10.0-19-generic linux-image-4.10.0-19-generic
+  linux-image-extra-4.10.0-19-generic
+Verwenden Sie »sudo apt autoremove«, um sie zu entfernen.
+0 aktualisiert, 0 neu installiert, 0 zu entfernen und 21 nicht aktualisiert.
+root@dbs:/home/dbs# cd /etc/nginx/sites-available/
+root@dbs:/etc/nginx/sites-available# ls -la
+insgesamt 16
+drwxr-xr-x 2 root root 4096 Mai 17 20:39 .
+drwxr-xr-x 8 root root 4096 Mai  2 17:56 ..
+-rw-r--r-- 1 root root 2416 Feb 15 17:39 default
+-rw-r--r-- 1 root root  611 Mai  2 19:26 uebung2
+root@dbs:/etc/nginx/sites-available# cp default elections
+root@dbs:/etc/nginx/sites-available# nano elections 
+root@dbs:/etc/nginx/sites-available# cat elections 
 
 
-def main():
-    cfg = {'host': '192.168.178.60',
-           'user': 'elecuser',
-           'pw': 'elecpass',
-           'db': 'elections',
-           'port': '5432'}
-    aufgabe1(cfg)
-    tweets, hashtags = aufgabe2()
-    aufgabe3(cfg, tweets, hashtags)
+# DBS-Election server configuration
+#
+server {
+	listen 80;
+	listen [::]:80;
 
+	root /var/www/elections;
 
-if __name__ == '__main__':
-    main()
+	# Add index.php to the list if you are using PHP
+	index index.html index.htm index.nginx-debian.html;
+
+	server_name _;
+
+	location / {
+		# First attempt to serve request as file, then
+		# as directory, then fall back to displaying a 404.
+		try_files $uri $uri/ =404;
+	}
+}
+root@dbs:/etc/nginx/sites-available# rm ../sites-enabled/*
+root@dbs:/etc/nginx/sites-available# ln -s /etc/nginx/sites-available/elections /etc/nginx/sites-enabled/elections
+root@dbs:/etc/nginx/sites-available# mkdir /var/www/elections
+root@dbs:/etc/nginx/sites-available# nano /var/www/elections/index.html
+root@dbs:/etc/nginx/sites-available# service nginx reload
+root@dbs:/etc/nginx/sites-available# curl localhost
+<html>
+<head>
+<title>Elections</title>
+</head>
+<body>
+</body>
+</html>
+root@dbs:/etc/nginx/sites-available# 
+
+\end{verbatim}
+\end{document}
