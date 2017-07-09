@@ -60,30 +60,31 @@ def aufgabe1(cfg):
                             sslmode = 'require',
                             port = cfg['port']) # Verbindung
         cur = conn.cursor() # Kursor
+
+        # Erstelle die Relationen/Tabelle
+        cur.execute('''
+            CREATE TABLE tweets (
+                handle           varchar(15) NOT NULL,
+                text             varchar(500) NOT NULL,
+                time             date NOT NULL,
+                retweet_count    integer,
+                favorite_count  integer,
+                truncated        boolean,
+                id               serial PRIMARY KEY);
+            ''')
+        cur.execute('''
+            CREATE TABLE contains (
+                hname varchar(140) NOT NULL,
+                id integer NOT NULL);
+            ''')
+        cur.execute('''
+            CREATE TABLE hashtags (
+                hname varchar(140) NOT NULL);
+            ''')
+        conn.commit()
     except:
         print 'ConnectionProblem'
 
-    # Erstelle die Relationen/Tabelle
-    cur.execute('''
-        CREATE TABLE tweets (
-            handle           varchar(15) NOT NULL,
-            text             varchar(500) NOT NULL,
-            time             date NOT NULL,
-            retweet_count    integer,
-            favorite_count  integer,
-            truncated        boolean,
-            id               serial PRIMARY KEY);
-        ''')
-    cur.execute('''
-        CREATE TABLE contains (
-            hname varchar(140) NOT NULL,
-            id integer NOT NULL);
-        ''')
-    cur.execute('''
-        CREATE TABLE hashtags (
-            hname varchar(140) NOT NULL);
-        ''')
-    conn.commit()
 
 # Aufgabe 2
 # =================================
@@ -130,36 +131,37 @@ def aufgabe3(cfg, tweets, hashtags):
                             sslmode = 'require',
                             port = cfg['port']) # Verbindung
         cur = conn.cursor() # Kursor
+
+        # Importiere die tweets
+        for d in tweets:
+            cur.execute('''
+            INSERT INTO tweets(handle, text, time, retweet_count, favorite_count, truncated)
+            VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')
+            '''.format(d['handle'],
+                       d['text'],
+                       d['time'],
+                       d['retweet_count'],
+                       d['favorite_count'],
+                       d['truncated']))
+        conn.commit()
+
+        # Importiere die Hashtags
+        for ht in hashtags:
+            cur.execute('''
+            INSERT INTO hashtags(hname) VALUES ('{0}')
+            '''.format(ht))
+            print('#' + ht)
+            cur.execute('''
+            SELECT id FROM tweets WHERE text LIKE '%{0}%';
+            '''.format('#' + ht))
+            ids = cur.fetchall() # touple of ids
+            for i in ids:
+                cur.execute('''
+                INSERT INTO contains(hname, id) VALUES ('{0}', '{1}')
+                '''.format(ht, i[0]))
+        conn.commit()
     except:
         print 'ConnectionProblem'
-
-    # Importiere die tweets
-    for d in tweets:
-        cur.execute('''
-        INSERT INTO tweets(handle, text, time, retweet_count, favorite_count, truncated)
-        VALUES ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}')
-        '''.format(d['handle'],
-                   d['text'],
-                   d['time'],
-                   d['retweet_count'],
-                   d['favorite_count'],
-                   d['truncated']))
-    conn.commit()
-
-    # Importiere die Hashtags
-    for ht in hashtags:
-        cur.execute('''
-        INSERT INTO hashtags(hname) VALUES ('{0}')
-        '''.format(ht))
-        cur.execute('''
-        SELECT id FROM tweets WHERE text LIKE '%{0}%'
-        '''.format(ht))
-        ids = cur.fetchall() # touple of ids
-        for i in ids:
-            cur.execute('''
-            INSERT INTO contains(hname, id) VALUES ('{0}', '{1}')
-            '''.format(ht, i[0]))
-    conn.commit()
 
 
 def main():

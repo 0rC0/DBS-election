@@ -33,7 +33,6 @@ def lot2set(lot):
         s.add(i[0])
     return s
 
-
 def get_days_list(cfg):
     #Return a list of hashtag from database
     conn = pg2.connect(host=cfg['host'],
@@ -49,26 +48,9 @@ def get_days_list(cfg):
     days_set = lot2set(fetchall)
     return days_set
 
-
-def freq2dic(l):
-    #convert a list in a dictionary with: key = list's element
-    #                                     value = how many time is in the list
-    d = dict()
-    for i in l:
-        if i in d:
-            d[i] += 1
-        else:
-            d[i] = 1
-    return d
-
-
-def ht_freq(days_set, cfg):
-    #return a dictionary with:
-    #                       keys: hashtags
-    #                       values: frequencies
-
+def get_hashtags_list(cfg):
+    #Return a list of hashtag from database
     #try:
-    d = dict()
     conn = pg2.connect(host=cfg['host'],
                        user=cfg['user'],
                        password=cfg['pw'],
@@ -76,22 +58,37 @@ def ht_freq(days_set, cfg):
                        sslmode='require',
                        port='5432')  # Verbindung
     cur = conn.cursor()  # Kursor
-    #print(days_set)
-    for day in days_set:
-        timestamp = make_timestamp(str(day))
-        cur.execute(''' SELECT hname 
-                        FROM contains 
-                        WHERE id IN (SELECT id 
-                                    FROM tweets
-                                     WHERE time = '{0}') '''.format(timestamp))
-        f = cur.fetchall()
-        freq_dic = freq2dic(lot2list(f))
-        d[str(day)] = freq_dic
+    cur.execute('''SELECT * from hashtags''')
+    fetchall = cur.fetchall()
     conn.close()
-    return d
-    #except:
-    #    print('Connection Error')
-    #    return None
+    ht_list = lot2list(fetchall)
+    #print(ht_list)
+    return ht_list
+
+
+def make_chart_json(ht_list, day_list, cfg):
+
+    conn = pg2.connect(host=cfg['host'],
+                       user=cfg['user'],
+                       password=cfg['pw'],
+                       database=cfg['db'],
+                       sslmode='require',
+                       port='5432')  # Verbindung
+    cur = conn.cursor()  # Kursor
+    l= []
+    for h in ht_list:
+        l2 = []
+        for d in day_list:
+            cur.execute('''SELECT COUNT(id)
+                           FROM tweets
+                           WHERE time = '{0}'
+                           AND id IN (SELECT id
+                                      FROM contains WHERE hname = '{1}');'''.format(d, h))
+            count = int(cur.fetchone()[0])
+            l2.append([d.strftime('%Y, %m, %d'), count])
+        l.append({'label' : h, 'data' : l2})
+    return l
+
 
 def write_to_json(d, filename):
     #Write the data to a json file
@@ -106,7 +103,7 @@ def main():
            'db': 'elections',
            'port': '5432'}
     #write_to_json(ht_freq(get_days_list(cfg), cfg), 'ht_freq.json')
-
+    write_to_json(make_chart_json(get_hashtags_list(cfg), get_days_list(cfg), cfg), 'freq.json')
 
 if __name__ == '__main__':
     main()
