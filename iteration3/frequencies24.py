@@ -2,8 +2,12 @@
 # -*- coding: utf-8 -*-
 
 '''
-dict = { hashtag: [date, freq]}
-'''
+4.  Visualisieren  Sie  die  H ̈aufigkeit  des  Auftretens  aller  ”Hashtags”  im
+Laufe  der  Zeit  mit  Balkendiagrammen  entlang  einer  Zeitachse.   Die
+kleinste Einheit entlang Ihrer Zeitachse soll ein Tag sein.
+5.  Visualisieren Sie die H ̈aufigkeit des Auftretens eines ausw ̈ahlbaren ”Hash-
+tags” im Laufe der Zeit mit Balkendiagrammen entlang einer Zeitachse.'''
+
 import psycopg2 as pg2
 from datetime import datetime
 import json
@@ -42,7 +46,9 @@ def get_days_list(cfg):
     fetchall = cur.fetchall()
     conn.close()
     days_set = lot2set(fetchall)
-    return days_set
+    l = list(days_set)
+    l.sort()
+    return l
 
 def get_hashtags_list(cfg):
     #Return a list of hashtag from database
@@ -71,9 +77,10 @@ def make_chart_json(ht_list, day_list, cfg):
                        sslmode='require',
                        port='5432')  # Verbindung
     cur = conn.cursor()  # Kursor
+    #l= []
     dic = dict()
     for h in ht_list:
-        l = []
+        l2 = []
         for d in day_list:
             cur.execute('''SELECT COUNT(id)
                            FROM tweets
@@ -81,10 +88,10 @@ def make_chart_json(ht_list, day_list, cfg):
                            AND id IN (SELECT id
                                       FROM contains WHERE hname = '{1}');'''.format(d, h))
             count = int(cur.fetchone()[0])
-            if count > 0:
-                l.append([d.strftime('%Y%m%d'), count])
-        dic[h] = l
-        #print(dic)
+            if count >0:
+                l2.append([d.strftime('%Y%m%d'), count])
+        #l.append({'label' : h, 'data' : l2})
+
     return dic
 
 
@@ -100,8 +107,8 @@ def main():
            'pw': 'elecpass',
            'db': 'elections',
            'port': '5432'}
-    jobj = make_chart_json(get_hashtags_list(cfg), get_days_list(cfg), cfg)
-    #print(jobj)
-    write_to_json(jobj, 'freq25.json')
+    chart = make_chart_json(get_hashtags_list(cfg), get_days_list(cfg), cfg)
+    write_to_json(chart, 'freq.json')
+
 if __name__ == '__main__':
     main()

@@ -1,32 +1,56 @@
 <html>
 <head>
-    <meta charset="utf-8">
+    <meta charset="utf-8"/>
+    <title>Aufgabe 24</title>
     <script language="javascript" type="text/javascript" src="jquery/jquery.js"></script>
 	<script language="javascript" type="text/javascript" src="flot/jquery.flot.js"></script>
 	<script language="javascript" type="text/javascript" src="flot/jquery.flot.stack.js"></script>
+    <script language="javascript" type="text/javascript" src="flot/jquery.flot.time.js"></script>
     <script language="javascript" type="text/javascript">
     $(document).ready(function(){
         console.log('getting JSON');
         $.getJSON("freq.json", function(json) {
            //succes - data loaded, now use plot:
                var plotarea = $("#placeholder");
-               var data =json;
+               console.log(json);
+               var data = json;
                console.log(json);
                    var options = {
                                 series: {stack: 0,
-                                lines: {show: false, steps: false },
-                                bars: {show: true, barWidth: 0.9, align: 'center',},},
+                                lines: {show: false},
+                                bars: {show: true},},
+                                legend : {position: 'se', show : true, container:$("#legend")},
+                                xaxis: { mode: "time",
+                                         minTickSize: [1, "day"],
+                                         timeformat: "%d%m",
+                                         font:{size:10, color:'black'}},
+                                clickable:true,
+                                hoverable: true
                                 };
-                                //xaxis: {ticks: [[1,'One'], [2,'Two'], [3,'Three'], [4,'Four'], [5,'Five']]},
 
                 $.plot(plotarea , data, options);
         });
     });
-
     </script>
+
+    <style media="screen" type="text/css">
+
+        #flotcontainer {
+            width: 600px;
+            height: 200px;
+            text-align: left;
+        }
+
+        #placeholder > div.legend > table {
+            border: 2px red solid;
+
+            }
+
+    </style>
 
 </head>
 <body>
-    <div id="placeholder" style="width:600px;height:300px;"></div>
+    <div id="placeholder" style="width:600px;height:300px"></div>
+    <div id="legend" style="width:600px;height:300px"></div>
 </body>
 </html>
